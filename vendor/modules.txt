@@ -24,9 +24,6 @@ github.com/creack/pty
 # github.com/derekparker/trie v0.0.0-20230829180723-39f4de51ef7d
 ## explicit; go 1.19
 github.com/derekparker/trie
-# github.com/go-delve/liner v1.2.3-0.20231231155935-4726ab1d7f62
-## explicit
-github.com/go-delve/liner
 # github.com/google/go-dap v0.12.0
 ## explicit; go 1.18
 github.com/google/go-dap
@@ -36,17 +33,32 @@ github.com/hashicorp/golang-lru/simplelru
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
+# github.com/lmorg/readline v0.0.0-20210316231630-be4b7d79fc3a
+## explicit; go 1.11
+github.com/lmorg/readline
 # github.com/mattn/go-colorable v0.1.13
 ## explicit; go 1.15
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
 github.com/mattn/go-isatty
-# github.com/mattn/go-runewidth v0.0.13
-## explicit; go 1.9
-github.com/mattn/go-runewidth
-# github.com/rivo/uniseg v0.2.0
-## explicit; go 1.12
+# github.com/reeflective/readline v1.0.15
+## explicit; go 1.21
+github.com/reeflective/readline
+github.com/reeflective/readline/inputrc
+github.com/reeflective/readline/internal/color
+github.com/reeflective/readline/internal/completion
+github.com/reeflective/readline/internal/core
+github.com/reeflective/readline/internal/display
+github.com/reeflective/readline/internal/editor
+github.com/reeflective/readline/internal/history
+github.com/reeflective/readline/internal/keymap
+github.com/reeflective/readline/internal/macro
+github.com/reeflective/readline/internal/strutil
+github.com/reeflective/readline/internal/term
+github.com/reeflective/readline/internal/ui
+# github.com/rivo/uniseg v0.4.4
+## explicit; go 1.18
 github.com/rivo/uniseg
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
@@ -75,9 +87,8 @@ go.starlark.net/syntax
 # golang.org/x/arch v0.11.0
 ## explicit; go 1.18
 golang.org/x/arch/arm64/arm64asm
-golang.org/x/arch/loong64/loong64asm
-golang.org/x/arch/riscv64/riscv64asm
 golang.org/x/arch/ppc64/ppc64asm
+golang.org/x/arch/riscv64/riscv64asm
 golang.org/x/arch/x86/x86asm
 # golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2
 ## explicit; go 1.18
@@ -90,8 +101,12 @@ golang.org/x/mod/semver
 # golang.org/x/sys v0.17.0
 ## explicit; go 1.18
 golang.org/x/sys/execabs
+golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
+# golang.org/x/term v0.8.0
+## explicit; go 1.17
+golang.org/x/term
 # golang.org/x/tools v0.14.0
 ## explicit; go 1.18
 golang.org/x/tools/go/gcexportdata
