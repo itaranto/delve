@@ -14,7 +14,7 @@ import (
 	"syscall"
 
 	"github.com/derekparker/trie"
-	"github.com/go-delve/liner"
+	"github.com/lmorg/readline"
 
 	"github.com/go-delve/delve/pkg/config"
 	"github.com/go-delve/delve/pkg/locspec"
@@ -54,7 +54,7 @@ type Term struct {
 	client   service.Client
 	conf     *config.Config
 	prompt   string
-	line     *liner.State
+	line     *readline.Instance
 	cmds     *Commands
 	stdout   *transcriptWriter
 	InitFile string
@@ -102,11 +102,11 @@ func New(client service.Client, conf *config.Config) *Term {
 		client: client,
 		conf:   conf,
 		prompt: "(dlv) ",
-		line:   liner.NewLiner(),
+		line:   readline.NewInstance(),
 		cmds:   cmds,
 		stdout: &transcriptWriter{pw: &pagingWriter{w: os.Stdout}},
 	}
-	t.line.SetCtrlZStop(true)
+	// t.line.SetCtrlZStop(true)
 
 	if strings.ToLower(os.Getenv("TERM")) != "dumb" {
 		t.stdout.pw = &pagingWriter{w: getColorableWriter()}
@@ -190,7 +190,9 @@ func (t *Term) IsTraceNonInteractive() bool {
 
 // Close returns the terminal to its previous mode.
 func (t *Term) Close() {
-	t.line.Close()
+	// TODO: Remove this
+	// t.line.Close()
+
 	if err := t.stdout.CloseTranscript(); err != nil {
 		fmt.Fprintf(os.Stderr, "error closing transcript file: %v\n", err)
 	}
@@ -218,7 +220,8 @@ func (t *Term) sigintGuard(ch <-chan os.Signal, multiClient bool) {
 			continue
 		}
 		if multiClient {
-			answer, err := t.line.Prompt("Would you like to [p]ause the target (returning to Delve's prompt) or [q]uit this client (leaving the target running) [p/q]? ")
+			t.line.SetPrompt("Would you like to [p]ause the target (returning to Delve's prompt) or [q]uit this client (leaving the target running) [p/q]? ")
+			answer, err := t.line.Readline()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%v", err)
 				continue
@@ -278,7 +281,16 @@ func (t *Term) Run() (int, error) {
 
 	var locs *trie.Trie
 
-	t.line.SetCompleter(func(line string) (c []string) {
+	t.line.TabCompleter = func(
+		runes []rune,
+		pos int,
+		dtc readline.DelayedTabContext,
+	) (string, []string, map[string]string, readline.TabDisplayType) {
+		/// TODO: Check this
+		line := string(runes)
+
+		var suggestions []string
+
 		cmd := t.cmds.Find(strings.Split(line, " ")[0], noPrefix)
 		switch cmd.aliases[0] {
 		case "break", "trace", "continue":
@@ -286,12 +298,12 @@ func (t *Term) Run() (int, error) {
 				prefix := line[:spc] + " "
 				funcs := fns.FuzzySearch(line[spc+1:])
 				for _, f := range funcs {
-					c = append(c, prefix+f)
+					suggestions = append(suggestions, prefix+f)
 				}
 			}
 		case "nullcmd", "nocmd":
 			commands := cmds.FuzzySearch(strings.ToLower(line))
-			c = append(c, commands...)
+			suggestions = append(suggestions, commands...)
 		case "print", "whatis":
 			if locs == nil {
 				localVars, err := t.client.ListLocalVariables(
@@ -313,25 +325,28 @@ func (t *Term) Run() (int, error) {
 				prefix := line[:spc] + " "
 				locals := locs.FuzzySearch(line[spc+1:])
 				for _, l := range locals {
-					c = append(c, prefix+l)
+					suggestions = append(suggestions, prefix+l)
 				}
 			}
 		}
-		return
-	})
+
+		return "", suggestions, nil, readline.TabDisplayGrid
+	}
 
 	fullHistoryFile, err := config.GetConfigFilePath(historyFile)
 	if err != nil {
 		fmt.Printf("Unable to load history file: %v.", err)
 	}
 
-	t.historyFile, err = os.OpenFile(fullHistoryFile, os.O_RDWR|os.O_CREATE, 0600)
+	t.historyFile, err = os.OpenFile(fullHistoryFile, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		fmt.Printf("Unable to open history file: %v. History will not be saved for this session.", err)
 	}
-	if _, err := t.line.ReadHistory(t.historyFile); err != nil {
-		fmt.Printf("Unable to read history file %s: %v\n", fullHistoryFile, err)
-	}
+
+	// TODO: Remove this.
+	// if _, err := t.line.ReadHistory(t.historyFile); err != nil {
+	// 	fmt.Printf("Unable to read history file %s: %v\n", fullHistoryFile, err)
+	// }
 
 	fmt.Println("Type 'help' for list of commands.")
 
@@ -440,29 +455,36 @@ func (t *Term) promptForInput() (string, error) {
 		fmt.Fprint(os.Stdout, t.conf.PromptColor)
 		defer fmt.Fprint(os.Stdout, terminalResetEscapeCode)
 	}
-	l, err := t.line.Prompt(t.prompt)
+
+	t.line.SetPrompt(t.prompt)
+
+	l, err := t.line.Readline()
 	if err != nil {
 		return "", err
 	}
 
 	l = strings.TrimSuffix(l, "\n")
 	if l != "" {
-		t.line.AppendHistory(l)
+		t.line.History.Write(l)
 	}
 
 	return l, nil
 }
 
-func yesno(line *liner.State, question, defaultAnswer string) (bool, error) {
+func yesno(line *readline.Instance, question, defaultAnswer string) (bool, error) {
 	for {
-		answer, err := line.Prompt(question)
+		line.SetPrompt(question)
+
+		answer, err := line.Readline()
 		if err != nil {
 			return false, err
 		}
+
 		answer = strings.ToLower(strings.TrimSpace(answer))
 		if answer == "" {
 			answer = defaultAnswer
 		}
+
 		switch answer {
 		case "n", "no":
 			return false, nil
@@ -474,9 +496,11 @@ func yesno(line *liner.State, question, defaultAnswer string) (bool, error) {
 
 func (t *Term) handleExit() (int, error) {
 	if t.historyFile != nil {
-		if _, err := t.line.WriteHistory(t.historyFile); err != nil {
-			fmt.Println("readline history error:", err)
-		}
+		// TODO: Remove this
+		// if _, err := t.line.WriteHistory(t.historyFile); err != nil {
+		// 	fmt.Println("readline history error:", err)
+		// }
+
 		if err := t.historyFile.Close(); err != nil {
 			fmt.Printf("error closing history file: %s\n", err)
 		}

@@ -7,9 +7,9 @@ require (
 	github.com/cosiner/argv v0.1.0
 	github.com/creack/pty v1.1.20
 	github.com/derekparker/trie v0.0.0-20230829180723-39f4de51ef7d
-	github.com/go-delve/liner v1.2.3-0.20231231155935-4726ab1d7f62
 	github.com/google/go-dap v0.12.0
 	github.com/hashicorp/golang-lru v1.0.2
+	github.com/lmorg/readline v0.0.0-20210316231630-be4b7d79fc3a
 	github.com/mattn/go-colorable v0.1.13
 	github.com/mattn/go-isatty v0.0.20
 	github.com/sirupsen/logrus v1.9.3
@@ -25,8 +25,6 @@ require (
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/mattn/go-runewidth v0.0.13 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2 // indirect

@@ -437,8 +437,9 @@ For example:
 			simple	- disables automatic switch between cgo and go
 			fromg	- starts from the registers stored in the runtime.g struct
 `},
-		{aliases: []string{"frame"},
-			group: stackCmds,
+		{
+			aliases: []string{"frame"},
+			group:   stackCmds,
 			cmdFn: func(t *Term, ctx callContext, arg string) error {
 				return c.frameCommand(t, ctx, arg, frameSet)
 			},
@@ -448,9 +449,11 @@ For example:
 	frame <m> <command>
 
 The first form sets frame used by subsequent commands such as "print" or "set".
-The second form runs the command on the given frame.`},
-		{aliases: []string{"up"},
-			group: stackCmds,
+The second form runs the command on the given frame.`,
+		},
+		{
+			aliases: []string{"up"},
+			group:   stackCmds,
 			cmdFn: func(t *Term, ctx callContext, arg string) error {
 				return c.frameCommand(t, ctx, arg, frameUp)
 			},
@@ -459,9 +462,11 @@ The second form runs the command on the given frame.`},
 	up [<m>]
 	up [<m>] <command>
 
-Move the current frame up by <m>. The second form runs the command on the given frame.`},
-		{aliases: []string{"down"},
-			group: stackCmds,
+Move the current frame up by <m>. The second form runs the command on the given frame.`,
+		},
+		{
+			aliases: []string{"down"},
+			group:   stackCmds,
 			cmdFn: func(t *Term, ctx callContext, arg string) error {
 				return c.frameCommand(t, ctx, arg, frameDown)
 			},
@@ -470,7 +475,8 @@ Move the current frame up by <m>. The second form runs the command on the given 
 	down [<m>]
 	down [<m>] <command>
 
-Move the current frame down by <m>. The second form runs the command on the given frame.`},
+Move the current frame down by <m>. The second form runs the command on the given frame.`,
+		},
 		{aliases: []string{"deferred"}, group: stackCmds, cmdFn: c.deferredCommand, helpMsg: `Executes command in the context of a deferred call.
 
 	deferred <n> <command>
@@ -1486,10 +1492,13 @@ func continueUntilCompleteNext(t *Term, state *api.DebuggerState, op string, sho
 
 func promptAutoContinue(t *Term, op string) (string, error) {
 	for {
-		answer, err := t.line.Prompt(fmt.Sprintf("[c] continue [s] stop here and cancel %s, [f] finish %s skipping all breakpoints? ", op, op))
+		t.line.SetPrompt(fmt.Sprintf("[c] continue [s] stop here and cancel %s, [f] finish %s skipping all breakpoints? ", op, op))
+
+		answer, err := t.line.Readline()
 		if err != nil {
 			return "", err
 		}
+
 		answer = strings.ToLower(strings.TrimSpace(answer))
 		switch answer {
 		case "f", "c", "s":
@@ -3445,7 +3454,7 @@ func transcript(t *Term, ctx callContext, args string) error {
 	if truncate {
 		flags |= os.O_TRUNC
 	}
-	fh, err := os.OpenFile(path, flags, 0660)
+	fh, err := os.OpenFile(path, flags, 0o660)
 	if err != nil {
 		return err
 	}
