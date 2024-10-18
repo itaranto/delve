@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-delve/liner"
+
+	"github.com/lmorg/readline/v4"
 )
 
 func main() {
-	line := liner.NewLiner()
-	line.Close()
+	_ = readline.NewInstance()
 	fmt.Printf("test\n")
 }
