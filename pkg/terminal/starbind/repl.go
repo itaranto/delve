@@ -42,7 +42,7 @@ import (
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
 
-	"github.com/go-delve/liner"
+	"github.com/lmorg/readline"
 )
 
 // REPL executes a read, eval, print loop.
@@ -53,12 +53,12 @@ func (env *Env) REPL() error {
 		globals[k] = v
 	}
 
-	rl := liner.NewLiner()
-	defer rl.Close()
+	rl := readline.NewInstance()
 	for {
 		if err := isCancelled(thread); err != nil {
 			return err
 		}
+
 		if err := rep(rl, thread, globals, env.out); err != nil {
 			if err == io.EOF {
 				break
@@ -81,19 +81,21 @@ const (
 //
 // It returns an error (possibly readline.ErrInterrupt)
 // only if readline failed. Starlark errors are printed.
-func rep(rl *liner.State, thread *starlark.Thread, globals starlark.StringDict, out EchoWriter) error {
+func rep(rl *readline.Instance, thread *starlark.Thread, globals starlark.StringDict, out EchoWriter) error {
 	defer out.Flush()
 	eof := false
 
 	prompt := normalPrompt
 	readline := func() ([]byte, error) {
-		line, err := rl.Prompt(prompt)
+		rl.SetPrompt(prompt)
+
+		line, err := rl.Readline()
 		out.Echo(prompt + line)
 		if line == exitCommand {
 			eof = true
 			return nil, io.EOF
 		}
-		rl.AppendHistory(line)
+		rl.History.Write(line)
 		prompt = extraPrompt
 		if err != nil {
 			if err == io.EOF {
@@ -115,7 +117,7 @@ func rep(rl *liner.State, thread *starlark.Thread, globals starlark.StringDict, 
 	}
 
 	if expr := soleExpr(f); expr != nil {
-		//TODO: check for 'exit'
+		// TODO: check for 'exit'
 		// eval
 		v, err := evalExprOptions(nil, thread, expr, globals)
 		if err != nil {
@@ -180,7 +182,7 @@ func MakeLoad() func(thread *starlark.Thread, module string) (starlark.StringDic
 		err     error
 	}
 
-	var cache = make(map[string]*entry)
+	cache := make(map[string]*entry)
 
 	return func(thread *starlark.Thread, module string) (starlark.StringDict, error) {
 		e, ok := cache[module]
